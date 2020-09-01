@@ -1,6 +1,6 @@
 
 const clone = a=>JSON.parse(JSON.stringify(a))
-const ecs = {typeBuilders:{},UUID:1,systemsForType:{},objectsById:{},objects:[],objectsByType:{}}
+const ecs = {typeBuilders:{},UUID:1,systemsForType:{},systems:[],objectsById:{},objects:[],objectsByType:{}}
 ecs.addType = function(type,structure){
     if(type in this.typeBuilders){
         throw `CREATE TYPE ERROR: type "${type}" already exists`
@@ -37,9 +37,12 @@ ecs.addSystem = function(inputType,fnc){
         throw `CREATE OBJECT ERROR: type '${inputType}' does not exist`
         return 0
     }
+    /*
     if(!this.systemsForType[inputType])
        this.systemsForType[inputType]=[]
     this.systemsForType[inputType].push(fnc)
+    */
+    this.systems.push({inputType,fnc})
 }
 
 ecs.createObject = function(type,init={}){    
@@ -48,6 +51,21 @@ ecs.createObject = function(type,init={}){
         return 0
     }
     return this.typeBuilders[type](init)
+}
+
+ecs.getObjectById(id){
+    let obj = this.objectsById[id]
+    if(!obj){ 
+        throw `object of type "${type}" with id "${id}" does not exist`
+        return 0
+    }
+    /*
+    if(obj._type!==type){
+        throw `object with id "${id}" is not of type "${type}" , it is a "${obj._type}"`
+        return 0
+    }
+    */
+    return obj
 }
 
 ecs.clearObjects =function(){
@@ -80,15 +98,20 @@ ecs.deleteObject=function(object){
 }
 
 ecs.tickSystems = function(){
+    /*
     for(let k in this.systemsForType)
         for(let s of this.systemsForType[k])
           for(let o of this.objectsByType[k])
                  s(this,o)
+    */
+    for(let s of this.systems)
+        for(let o of this.objectsByType[s.inputType])
+          s.fnc(this,o)
     this.refreshObjects()
 }
 
 //////////////////////////////////
-
+/*
 ecs.addType('player',{name:'player',health:0,damage:0})
 ecs.addType('card',{place:'hands',size:'small'})
 
@@ -122,4 +145,8 @@ console.log(ecs)
 ecs.refreshObjects()
 
 console.log(ecs)
+*/
+
+//exports {ecs}
+module.exports = ecs
 
